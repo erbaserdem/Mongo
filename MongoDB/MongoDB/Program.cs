@@ -4,14 +4,16 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Serialization;
 using MongoDB.Driver;
 using MongoDB.Bson;
+using MongoDB.Bson.Serialization;
 
 namespace MongoDB
 {
     class Program
     {
-        public static void Search(IMongoCollection<BsonDocument> collection)
+        public static List<BsonDocument> Search(IMongoCollection<BsonDocument> collection)
         {
             var filterBuilder = Builders<BsonDocument>.Filter;
             var filter = filterBuilder.Empty;
@@ -95,6 +97,25 @@ namespace MongoDB
                 Console.WriteLine(item.GetElement("restaurant_id").ToString());
                 counter++;
             }
+            return document.ToList();
+        }
+
+        public static void TopRated(IMongoCollection<BsonDocument> collection)
+        {
+            var toListRatings = Search(collection);
+
+            foreach (var item in toListRatings)
+            {
+                var grades = item.GetElement("grades");
+
+                //var g = BsonSerializer.Deserialize<GradeCollection>(grades.Value.ToBsonDocument());
+
+                foreach (var gg in grades.Value.AsBsonArray)
+                {
+                    var g = new Grade() { grade = gg["grade"].AsString};
+                    Console.WriteLine(g.grade);
+                }
+            }
         }
 
         static void Main(string[] args)
@@ -131,19 +152,6 @@ namespace MongoDB
                 keyValuePairs.Add(Console.ReadLine());
                 keyValuePairs.Add("lastname");
                 keyValuePairs.Add(Console.ReadLine());
-               /* bool a = true;
-                while (a)
-                {
-                    string temporary = Console.ReadLine();
-                    if (temporary != null && String.Compare(temporary, "trololo", StringComparison.OrdinalIgnoreCase) != 0)
-                    {
-                        keyValuePairs.Add(temporary);
-                    }
-                    else
-                    {
-                        a = false;
-                    }
-                }*/
 
                 var documentToAdd = new BsonDocument
                 {
@@ -164,15 +172,35 @@ namespace MongoDB
                 string field = Console.ReadLine();
                 string value = Console.ReadLine();
                 var update = Builders<BsonDocument>.Update.Set(field, value);
+                
                 collection.UpdateOne(filter, update);
+            }
+            else if (string.Compare(readLine, "top rated", StringComparison.OrdinalIgnoreCase) == 0)
+            {
+                TopRated(collection);
             }
 
 
 
 
-            Console.ReadKey();
+
             
 
         }
+    }
+
+    public class Grade
+    {
+        public DateTime date { get; set; }
+
+        public string grade { get; set; }
+
+        public int score { get; set; }
+
+    }
+
+    public class GradeCollection
+    {
+        public List<Grade> grades { get; set; }
     }
 }
