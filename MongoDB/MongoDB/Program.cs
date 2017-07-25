@@ -13,7 +13,7 @@ namespace MongoDB
 {
     class Program
     {
-        public static List<BsonDocument> Search(IMongoCollection<BsonDocument> collection)
+        public static IFindFluent<BsonDocument,BsonDocument> Search(IMongoCollection<BsonDocument> collection)
         {
             var filterBuilder = Builders<BsonDocument>.Filter;
             var filter = filterBuilder.Empty;
@@ -87,6 +87,121 @@ namespace MongoDB
             var document = collection.Find(filter);
             Console.WriteLine(document.ToList().Count() + "Restaurants have been found");
             document.Sort(Builders<BsonDocument>.Sort.Ascending("name"));
+           /* int counter = 1;
+            foreach (BsonDocument item in document.ToList())
+            {
+                Console.WriteLine("\nRestaurant " + counter);
+                Console.WriteLine(item.GetElement("name").ToString());
+                Console.WriteLine(item.GetElement("borough").ToString());
+                Console.WriteLine(item.GetElement("cuisine").ToString());
+                Console.WriteLine(item.GetElement("restaurant_id").ToString());
+                counter++;
+            }*/
+            return document;
+        }
+
+        public static void TopRated(IMongoCollection<BsonDocument> collection, int amount)
+        {
+            var toListRatings = Search(collection);
+
+            foreach (var item in toListRatings.ToList())
+            {
+                var grades = item.GetElement("grades");
+                var rest_id = item["restaurant_id"].ToString();
+                var gradeList = new List<Grade>();
+                //var g = BsonSerializer.Deserialize<GradeCollection>(grades.Value.ToBsonDocument());
+
+                foreach (var gg in grades.Value.AsBsonArray)
+                {
+                    
+                    var g = new Grade();
+                    gradeList.Add(g);
+                    g.score = gg["score"].IsBsonNull ? 0 : gg["score"].ToInt32();
+                    g.grade = gg["grade"].IsBsonNull ? " " : gg["grade"].ToString();
+                    g.date = gg["date"].IsBsonNull ? DateTime.MinValue : gg["date"].ToUniversalTime();
+
+
+
+                }
+                if (gradeList.Count>0)
+                {
+                    var filter = Builders<BsonDocument>.Filter.Eq("restaurant_id", rest_id);
+                    var update = Builders<BsonDocument>.Update.Set("average_score", gradeList.Average(g => g.score));
+                    collection.UpdateOne(filter, update);
+                }
+
+            }
+            toListRatings.Sort(Builders<BsonDocument>.Sort.Descending("average_score")).Limit(amount);
+            int counter = 1;
+            foreach (BsonDocument item in toListRatings.ToList())
+            {
+                Console.WriteLine("\nRestaurant " + counter);
+                Console.WriteLine(item.GetElement("average_score").ToString());
+                Console.WriteLine(item.GetElement("name").ToString());
+                Console.WriteLine(item.GetElement("borough").ToString());
+                Console.WriteLine(item.GetElement("cuisine").ToString());
+                Console.WriteLine(item.GetElement("restaurant_id").ToString());
+                counter++;
+            }
+        }
+
+        public static void TopRatedAll(IMongoCollection<BsonDocument> collection, int amount)
+        {
+            var filter2 = Builders<BsonDocument>.Filter.Empty;
+            var toListRatings = collection.Find(filter2) ;
+
+            foreach (var item in toListRatings.ToList())
+            {
+                BsonElement grades;
+                if (item.Contains("grades"))
+                {
+                    grades = item.GetElement("grades");
+                }
+                else
+                {
+                    break;
+                }
+
+                var rest_id = item["restaurant_id"].ToString();
+                var gradeList = new List<Grade>();
+                //var g = BsonSerializer.Deserialize<GradeCollection>(grades.Value.ToBsonDocument());
+
+                foreach (var gg in grades.Value.AsBsonArray)
+                {
+
+                    var g = new Grade();
+                    gradeList.Add(g);
+                    g.score = gg["score"].IsBsonNull ? 0 : gg["score"].ToInt32();
+                    g.grade = gg["grade"].IsBsonNull ? " " : gg["grade"].ToString();
+                    g.date = gg["date"].IsBsonNull ? DateTime.MinValue : gg["date"].ToUniversalTime();
+
+
+
+                }
+                if (gradeList.Count > 0)
+                {
+                    var filter = Builders<BsonDocument>.Filter.Eq("restaurant_id", rest_id);
+                    var update = Builders<BsonDocument>.Update.Set("average_score", gradeList.Average(g => g.score));
+                    collection.UpdateOne(filter, update);
+                }
+
+            }
+            toListRatings.Sort(Builders<BsonDocument>.Sort.Descending("average_score")).Limit(amount);
+            int counter = 1;
+            foreach (BsonDocument item in toListRatings.ToList())
+            {
+                Console.WriteLine("\nRestaurant " + counter);
+                Console.WriteLine(item.GetElement("average_score").ToString());
+                Console.WriteLine(item.GetElement("name").ToString());
+                Console.WriteLine(item.GetElement("borough").ToString());
+                Console.WriteLine(item.GetElement("cuisine").ToString());
+                Console.WriteLine(item.GetElement("restaurant_id").ToString());
+                counter++;
+            }
+        }
+
+        public static void Print(IFindFluent<BsonDocument, BsonDocument> document)
+        {
             int counter = 1;
             foreach (BsonDocument item in document.ToList())
             {
@@ -96,25 +211,6 @@ namespace MongoDB
                 Console.WriteLine(item.GetElement("cuisine").ToString());
                 Console.WriteLine(item.GetElement("restaurant_id").ToString());
                 counter++;
-            }
-            return document.ToList();
-        }
-
-        public static void TopRated(IMongoCollection<BsonDocument> collection)
-        {
-            var toListRatings = Search(collection);
-
-            foreach (var item in toListRatings)
-            {
-                var grades = item.GetElement("grades");
-
-                //var g = BsonSerializer.Deserialize<GradeCollection>(grades.Value.ToBsonDocument());
-
-                foreach (var gg in grades.Value.AsBsonArray)
-                {
-                    var g = new Grade() { grade = gg["grade"].AsString};
-                    Console.WriteLine(g.grade);
-                }
             }
         }
 
@@ -141,7 +237,7 @@ namespace MongoDB
             var readLine = Console.ReadLine(); 
             if (string.Compare(readLine,"search",StringComparison.OrdinalIgnoreCase)==0)
             {              
-                Search(collection);
+                Print(Search(collection));
             }
 
             else if (string.Compare(readLine, "add", StringComparison.OrdinalIgnoreCase) == 0)
@@ -177,14 +273,28 @@ namespace MongoDB
             }
             else if (string.Compare(readLine, "top rated", StringComparison.OrdinalIgnoreCase) == 0)
             {
-                TopRated(collection);
+                Console.WriteLine("How many of the top rated places from your filtering would you like to see?");
+                int amount = Convert.ToInt32(Console.ReadLine());
+                TopRated(collection,amount);
+
+            }
+
+            else if (string.Compare(readLine, "top rated all", StringComparison.OrdinalIgnoreCase) == 0)
+            {
+                Console.WriteLine("How many of the top rated places from your filtering would you like to see?");
+                int amount = Convert.ToInt32(Console.ReadLine());
+
+                Console.WriteLine("This might take some time so pls wait");
+
+                TopRatedAll(collection,amount);
+
             }
 
 
 
 
+            Console.ReadKey();
 
-            
 
         }
     }
