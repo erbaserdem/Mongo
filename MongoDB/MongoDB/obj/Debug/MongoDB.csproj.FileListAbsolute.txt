@@ -1,0 +1,13 @@
+C:\Workspace\Mongo\MongoDB\MongoDB\bin\Debug\MongoDB.exe.config
+C:\Workspace\Mongo\MongoDB\MongoDB\bin\Debug\MongoDB.exe
+C:\Workspace\Mongo\MongoDB\MongoDB\bin\Debug\MongoDB.pdb
+C:\Workspace\Mongo\MongoDB\MongoDB\bin\Debug\MongoDB.Bson.dll
+C:\Workspace\Mongo\MongoDB\MongoDB\bin\Debug\MongoDB.Driver.Core.dll
+C:\Workspace\Mongo\MongoDB\MongoDB\bin\Debug\MongoDB.Driver.dll
+C:\Workspace\Mongo\MongoDB\MongoDB\bin\Debug\System.Runtime.InteropServices.RuntimeInformation.dll
+C:\Workspace\Mongo\MongoDB\MongoDB\bin\Debug\MongoDB.Bson.xml
+C:\Workspace\Mongo\MongoDB\MongoDB\bin\Debug\MongoDB.Driver.xml
+C:\Workspace\Mongo\MongoDB\MongoDB\bin\Debug\MongoDB.Driver.Core.xml
+C:\Workspace\Mongo\MongoDB\MongoDB\obj\Debug\MongoDB.csprojResolveAssemblyReference.cache
+C:\Workspace\Mongo\MongoDB\MongoDB\obj\Debug\MongoDB.exe
+C:\Workspace\Mongo\MongoDB\MongoDB\obj\Debug\MongoDB.pdb
